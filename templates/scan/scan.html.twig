@@ -1,0 +1,17 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Scan image{% endblock %}
+
+{% block page_contents %}
+    {% if success or error %}
+        <div class="alert alert-{% if success %}success{% elseif error %}danger{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endif %}
+
+    <h1>Scanner</h1>
+    {{ form(form) }}
+{% endblock %}

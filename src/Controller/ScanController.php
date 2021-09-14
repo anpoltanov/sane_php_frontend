@@ -38,6 +38,7 @@ class ScanController extends AbstractController
             $error = true;
             $message = 'No scanners found';
         }
+        // @TODO implement scanner selector
         $scanner = array_pop($scanner);
         $scannerOptions = $scanImageService->getScannerOptions($scanner);
         if (!$error && empty($scannerOptions)) {

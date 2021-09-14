@@ -106,6 +106,7 @@ class ScanImage
                 throw new Exception\RuntimeException(sprintf("Scan error %s:\n %s", $stdout, $stderr));
             }
 
+            // @TODO move dirpath to config
             $filePath = sprintf('/mnt/sd/public/storage/scans/%s',
                 $scanTask->getFullFileName()
             );
@@ -115,6 +116,7 @@ class ScanImage
                 throw new Exception\RuntimeException(sprintf("File write error %s:\n %s", $stdout, $stderr));
             }
 
+            // @TODO get this path from config
             return sprintf('Scanned to file: PublicSD/storage/scans/%s.',
                 $scanTask->getFullFileName()
             );

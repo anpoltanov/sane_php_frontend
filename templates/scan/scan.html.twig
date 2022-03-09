@@ -13,5 +13,7 @@
     {% endif %}
 
     <h1>Scanner</h1>
-    {{ form(form) }}
+    {% if form is not null %}
+        {{ form(form) }}
+    {% endif %}
 {% endblock %}

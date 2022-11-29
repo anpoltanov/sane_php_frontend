@@ -68,7 +68,7 @@ class ScanImage
 
             $message = explode("\n", trim($stdout));
         } catch (Exception\RuntimeException $e) {
-            $message = $e->getMessage();
+            throw $e;
         } finally {
             fclose($pipes[1]);
             fclose($pipes[2]);

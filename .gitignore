@@ -15,3 +15,9 @@
 npm-debug.log
 yarn-error.log
 ###< symfony/webpack-encore-bundle ###
+
+compose.override.yaml
+compose.yaml
+
+/etc/apache2/docker-backend.conf
+/etc/sane.d/net.conf

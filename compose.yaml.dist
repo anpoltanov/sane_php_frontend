@@ -1,0 +1,46 @@
+version: ''
+
+name: sane_php_frontend
+services:
+  php:
+    container_name: sane_php_frontend-php
+    build:
+      context: .
+      target: prod
+    image: sane_php_frontend/php:prod
+    ports:
+      - "80:80"
+    restart: always
+    networks:
+      - default
+    depends_on:
+      - redis
+    volumes:
+      - php_var:/var/www/html/var
+
+    environment:
+      - TZ="Europe/Moscow"
+#    healthcheck:
+#      test: curl -sS http://php/healthcheck || echo 1
+#      interval: 120s
+#      timeout: 3s
+#      retries: 12
+
+  redis:
+    container_name: sane_php_frontend-redis
+    image: redis:7.2.4
+    networks:
+      - default
+    restart: always
+    volumes:
+      - redis_data:/data
+
+networks:
+  default:
+    name: sane_php_frontend-default
+
+volumes:
+  redis_data:
+    name: sane_php_frontend-redis_data
+  php_var:
+    name: sane_php_frontend-php_var

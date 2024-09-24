@@ -14,7 +14,7 @@ class ScanImage
      */
     public function getScannerOptions(string $device): array
     {
-        $shellCmd = sprintf('scanimage --help -d %s', escapeshellarg($device));
+        $shellCmd = sprintf('scanimage --help --format=pnm -d %s', escapeshellarg($device));
         $message = $pipes = [];
         $proc = null;
 
@@ -66,7 +66,7 @@ class ScanImage
                 throw new Exception\RuntimeException(sprintf("Internal error %s:\n %s", $stdout, $stderr));
             }
 
-            $message = explode("\n", trim($stdout));
+            $message = trim($stdout) ? explode("\n", trim($stdout)) : [];
         } catch (Exception\RuntimeException $e) {
             throw $e;
         } finally {
@@ -106,20 +106,14 @@ class ScanImage
                 throw new Exception\RuntimeException(sprintf("Scan error %s:\n %s", $stdout, $stderr));
             }
 
-            // @TODO move dirpath to config
-            $filePath = sprintf('/mnt/sd/public/storage/scans/%s',
-                $scanTask->getFullFileName()
-            );
+            $filePath = sprintf('/tmp/scan.%s', $scanTask->getExtension());
             $success = file_put_contents($filePath, $stdout);
 
             if ($success === false) {
                 throw new Exception\RuntimeException(sprintf("File write error %s:\n %s", $stdout, $stderr));
             }
 
-            // @TODO get this path from config
-            return sprintf('Scanned to file: PublicSD/storage/scans/%s.',
-                $scanTask->getFullFileName()
-            );
+            return $stdout;
         } catch (Exception\RuntimeException $e) {
             throw $e;
         } finally {

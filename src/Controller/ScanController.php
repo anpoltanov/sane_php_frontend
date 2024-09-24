@@ -6,9 +6,10 @@ namespace App\Controller;
 
 use App\Entity\ScanTask;
 use App\Form\Type\ScanType;
-use App\Service\Exception\RuntimeException;
+use App\Service\Exception\RuntimeException as ServiceRuntimeException;
 use App\Service\ScanImage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,13 +43,16 @@ class ScanController extends AbstractController
                 $item->expiresAfter(3600);
                 return $scanImageService->getScanners();
             });
-            if (empty($scanner)) {
+            if (count($scanner) === 0) {
                 throw new Exception\RuntimeException('No scanners found');
             }
 
             // Acquire scanner options list
             // @TODO implement scanner selector
             $scanner = array_pop($scanner);
+            if (empty($scanner)) {
+                throw new Exception\RuntimeException('Scanner name is empty');
+            }
             $scannerOptions = $redisAdapter->get('current_scanner_props_list', function (ItemInterface $item) use ($scanImageService, $scanner) {
                 $item->expiresAfter(3600);
                 return $scanImageService->getScannerOptions($scanner);
@@ -61,12 +65,23 @@ class ScanController extends AbstractController
             $scanTask->setAvailableResolutions($scannerOptions['resolutions']); // @TODO encapsulate scanner options in class
             $form = $this->createForm(ScanType::class, $scanTask);
             $form->handleRequest($request);
-            if (!$error && $form->isSubmitted() && $form->isValid()) {
+            if ($form->isSubmitted() && $form->isValid()) {
                 // Scan
-                $message = $scanImageService->scanImage($scanTask);
+                $content = $scanImageService->scanImage($scanTask);
                 $success = true;
+
+                $response = new Response($content);
+
+                $disposition = HeaderUtils::makeDisposition(
+                    HeaderUtils::DISPOSITION_ATTACHMENT,
+                    $scanTask->getFullFileName()
+                );
+
+                $response->headers->set('Content-Disposition', $disposition);
+
+                return $response;
             }
-        } catch (RuntimeException $e) {
+        } catch (ServiceRuntimeException|Exception\RuntimeException $e) {
             $error = true;
             $message = $e->getMessage();
             $redisAdapter->delete('scanners_list');
@@ -97,7 +112,7 @@ class ScanController extends AbstractController
 
         try {
             $message = $scanImageService->getScannerOptions($device);
-        } catch (RuntimeException $e) {
+        } catch (ServiceRuntimeException $e) {
             $message = $e->getMessage();
         }
         return new JsonResponse(json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK));

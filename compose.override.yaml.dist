@@ -1,0 +1,31 @@
+version: ''
+
+services:
+  php:
+    build:
+      context: .
+      target: dev # change me
+    image: sane_php_frontend/php:dev # change me
+    restart: no
+    #        user: "1000:1000"
+    volumes:
+      - ./:/var/www/html/
+    environment:
+      - PHP_IDE_CONFIG="serverName=scan.wip"
+
+  redis:
+    restart: no
+
+  webserver:
+    container_name: sane_php_frontend-webserver_dev
+    image: httpd:2.4
+    restart: no
+    configs:
+      -   source: httpd_proxy_config
+          target: /usr/local/apache2/conf/httpd.conf
+    ports:
+      - 80:80
+
+configs:
+  httpd_proxy_config:
+    file: ./etc/apache2/dev.httpd.conf

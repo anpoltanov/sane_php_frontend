@@ -48,6 +48,7 @@ class ScanPageTest extends WebTestCase
         $this->assertSelectorExists('[data-controller="scan"]');
         $this->assertSelectorExists('input[name="downloadFormat"][value="pdf"]');
         $this->assertSelectorExists('input[name="downloadFormat"][value="jpeg"]');
+        $this->assertSelectorExists('.scan-preview[hidden]');
     }
 
     private function mockScanImage($client): void

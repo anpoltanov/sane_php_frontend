@@ -79,6 +79,7 @@ export default class extends Controller {
             }
             if (this.hasPreviewTarget) {
                 this.previewTarget.classList.remove('d-none');
+                this.previewTarget.hidden = false;
             }
             this.showStatus('Scan complete. Choose a format and download.', false);
         } catch (error) {

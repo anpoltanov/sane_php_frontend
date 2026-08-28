@@ -28,3 +28,9 @@ vendor/bin/phpunit
 ```
 
 Set `SCAN_MOCK=1` in `.env.local` to use a fixture image instead of a physical scanner.
+
+Local PHP server (serves Encore assets from `public/build`):
+
+```bash
+php -S 127.0.0.1:8000 -t public public/router.php
+```

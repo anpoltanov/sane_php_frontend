@@ -1,7 +1,8 @@
 {
     "name": "anpoltanov/sane_php_frontend",
     "description": "Web UI for SANE. Uses scanimage.",
-    "license": "proprietary",
+    "license": "MIT",
+    "type": "project",
     "authors": [
         {
             "name": "Andrey Poltanov",
@@ -9,25 +10,34 @@
         }
     ],
     "require": {
-        "php": "^8.1",
-        "ext-json": "*",
-        "symfony/flex": "2.*",
-        "symfony/framework-bundle": "5.4.*",
-        "symfony/dotenv": "5.4.*",
-        "symfony/yaml": "5.4.*",
-        "symfony/console": "5.4.*",
-        "sensio/framework-extra-bundle": "6.1.*",
-        "symfony/twig-bundle": "5.4.*",
+        "php": "^8.3",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "symfony/asset": "6.4.*",
+        "symfony/console": "6.4.*",
+        "symfony/dotenv": "6.4.*",
+        "symfony/flex": "^2",
+        "symfony/form": "6.4.*",
+        "symfony/framework-bundle": "6.4.*",
+        "symfony/runtime": "6.4.*",
+        "symfony/security-csrf": "6.4.*",
+        "symfony/twig-bundle": "6.4.*",
+        "symfony/validator": "6.4.*",
+        "symfony/webpack-encore-bundle": "^2.1",
+        "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^3.0",
-        "twig/twig": "^3.0",
-        "symfony/form": "5.4.*",
-        "symfony/validator": "5.4.*",
-        "symfony/asset": "5.4.*",
-        "symfony/webpack-encore-bundle": "^1.16"
+        "twig/twig": "^3.0"
     },
     "require-dev": {
-        "symfony/web-profiler-bundle": "5.4.*",
-        "symfony/debug-bundle": "5.4.*"
+        "phpunit/phpunit": "^10.5",
+        "symfony/browser-kit": "6.4.*",
+        "symfony/css-selector": "6.4.*",
+        "symfony/debug-bundle": "6.4.*",
+        "symfony/phpunit-bridge": "6.4.*",
+        "symfony/web-profiler-bundle": "6.4.*"
+    },
+    "conflict": {
+        "symfony/symfony": "*"
     },
     "autoload": {
         "psr-4": {
@@ -43,19 +53,33 @@
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
-        }
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ]
     },
     "config": {
-        "platform": {
-            "php": "8.1"
-        },
         "allow-plugins": {
-            "symfony/flex": true
+            "php-http/discovery": true,
+            "symfony/flex": true,
+            "symfony/runtime": true
+        },
+        "optimize-autoloader": true,
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true,
+        "platform": {
+            "php": "8.3.0"
         }
     },
     "extra": {
         "symfony": {
-            "require": "5.4.*"
+            "allow-contrib": false,
+            "require": "6.4.*"
         }
     }
 }

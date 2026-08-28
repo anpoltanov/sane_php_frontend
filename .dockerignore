@@ -1,0 +1,8 @@
+.git
+.idea
+var
+vendor
+node_modules
+.phpunit.cache
+public/build
+npm-debug.log

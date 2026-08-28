@@ -13,24 +13,16 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
-/**
- * Class ScanController
- * @package App\Controller
- */
 class ScanController extends AbstractController
 {
     /**
-     * @param Request $request
-     * @param ScanImage $scanImageService
-     * @param CacheInterface $redisAdapter
-     * @return Response
      * @throws \Psr\Cache\InvalidArgumentException
-     * @Route("/", name="scan")
      */
+    #[Route('/', name: 'scan')]
     public function indexAction(Request $request, ScanImage $scanImageService, CacheInterface $redisAdapter): Response
     {
         $success = $error = false;
@@ -96,12 +88,7 @@ class ScanController extends AbstractController
         ]);
     }
 
-    /**
-     * @param Request $request
-     * @param ScanImage $scanImageService
-     * @return Response
-     * @Route("/scanner/options", name="scanner_options")
-     */
+    #[Route('/scanner/options', name: 'scanner_options')]
     public function getScannerOptionsAction(Request $request, ScanImage $scanImageService): Response
     {
         $device = $request->query->getAlnum('device');
@@ -115,17 +102,17 @@ class ScanController extends AbstractController
         } catch (ServiceRuntimeException $e) {
             $message = $e->getMessage();
         }
-        return new JsonResponse(json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK));
+
+        return (new JsonResponse($message))->setEncodingOptions(
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK
+        );
     }
 
-    /**
-     * @param Request $request
-     * @param ScanImage $scanImageService
-     * @return Response
-     * @Route("/scanner", name="scanner_index")
-     */
-    public function getScannersAction(Request $request, ScanImage $scanImageService): Response
+    #[Route('/scanner', name: 'scanner_index')]
+    public function getScannersAction(ScanImage $scanImageService): Response
     {
-        return new JsonResponse(json_encode($scanImageService->getScanners(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK));
+        return (new JsonResponse($scanImageService->getScanners()))->setEncodingOptions(
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK
+        );
     }
 }

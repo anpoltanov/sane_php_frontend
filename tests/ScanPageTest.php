@@ -18,6 +18,8 @@ class ScanPageTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h1', 'Scanner');
+        $this->assertSelectorExists('select[name="scan[deviceName]"]');
+        $this->assertSelectorNotExists('select[name="scan[extension]"]');
     }
 
     public function testScanFormIncludesCsrfToken(): void
@@ -34,6 +36,18 @@ class ScanPageTest extends WebTestCase
             $crawler->filter('input[type="hidden"][name$="[_token]"]')->count(),
             'CSRF token field should be present on the scan form'
         );
+    }
+
+    public function testPreviewPanelAndFormatChoicesAreRendered(): void
+    {
+        $client = static::createClient();
+        $this->mockScanImage($client);
+
+        $client->request('GET', '/');
+
+        $this->assertSelectorExists('[data-controller="scan"]');
+        $this->assertSelectorExists('input[name="downloadFormat"][value="pdf"]');
+        $this->assertSelectorExists('input[name="downloadFormat"][value="jpeg"]');
     }
 
     private function mockScanImage($client): void

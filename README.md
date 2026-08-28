@@ -4,7 +4,7 @@ This is a SANE frontend using the `scanimage` shell utility. SANE PHP Frontend i
 
 **Current stack:** PHP 8.3, Symfony 6.4 LTS, Twig, Stimulus, Bootstrap 5, Imagick (Docker), Redis cache in production.
 
-Version 0.2 contains essential functionality for listing scanners, acquiring available resolutions, and executing scan tasks.
+The UI lists scanners, scans at a chosen resolution, shows a preview, then lets you download JPEG, PNG, TIFF, or PDF. Cyrillic file names are supported.
 
 ## Deploy
 
@@ -26,3 +26,5 @@ composer install
 npm ci && npm run build
 vendor/bin/phpunit
 ```
+
+Set `SCAN_MOCK=1` in `.env.local` to use a fixture image instead of a physical scanner.

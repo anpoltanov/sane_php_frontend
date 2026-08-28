@@ -4,17 +4,11 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Service\ScanConverter;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @TODO implement deviceName prop
- */
 class ScanTask
 {
-    public const FILE_EXTENSION_PNG = 'png';
-    public const FILE_EXTENSION_JPG = 'jpeg';
-    public const FILE_EXTENSION_TIFF = 'tiff';
-
     #[Assert\Length(
         min: 1,
         max: 50,
@@ -22,23 +16,17 @@ class ScanTask
     )]
     protected string $fileName;
 
-    #[Assert\Choice(callback: 'getAvailableExtensions')]
     #[Assert\NotBlank]
-    protected string $extension;
+    #[Assert\Length(max: 200)]
+    protected string $deviceName = '';
 
-    #[Assert\Choice(callback: 'getAvailableResolutions')]
     #[Assert\NotBlank]
+    #[Assert\Range(min: 50, max: 2400)]
     protected ?int $resolution = null;
-
-    /**
-     * @var int[]
-     */
-    protected static array $availableResolutions = [];
 
     public function __construct()
     {
-        $this->fileName = (new \DateTime())->format('Y_m_d_H_i_s');
-        $this->extension = self::FILE_EXTENSION_PNG;
+        $this->fileName = (new \DateTimeImmutable())->format('Y_m_d_H_i_s');
     }
 
     public function getFileName(): string
@@ -49,17 +37,19 @@ class ScanTask
     public function setFileName(string $fileName): ScanTask
     {
         $this->fileName = $fileName;
+
         return $this;
     }
 
-    public function getExtension(): string
+    public function getDeviceName(): string
     {
-        return $this->extension;
+        return $this->deviceName;
     }
 
-    public function setExtension(string $extension): ScanTask
+    public function setDeviceName(string $deviceName): ScanTask
     {
-        $this->extension = $extension;
+        $this->deviceName = $deviceName;
+
         return $this;
     }
 
@@ -68,42 +58,15 @@ class ScanTask
         return $this->resolution;
     }
 
-    public function setResolution(?int $resolution): ScanTask
+    public function setResolution(int|string|null $resolution): ScanTask
     {
-        $this->resolution = $resolution;
+        $this->resolution = $resolution === null || $resolution === '' ? null : (int) $resolution;
+
         return $this;
     }
 
-    public function getFullFileName(): string
+    public function getFullFileName(string $format = ScanConverter::FORMAT_JPEG): string
     {
-        return sprintf('%s.%s', $this->fileName, $this->extension);
-    }
-
-    /**
-     * @return string[]
-     */
-    public static function getAvailableExtensions(): array
-    {
-        return [
-            self::FILE_EXTENSION_PNG,
-            self::FILE_EXTENSION_JPG,
-            self::FILE_EXTENSION_TIFF,
-        ];
-    }
-
-    /**
-     * @return int[]
-     */
-    public static function getAvailableResolutions(): array
-    {
-        return self::$availableResolutions;
-    }
-
-    public static function setAvailableResolutions(array $availableResolutions): void
-    {
-        $availableResolutions = array_map(static function ($value) {
-            return (int) $value;
-        }, $availableResolutions);
-        self::$availableResolutions = $availableResolutions;
+        return sprintf('%s.%s', $this->fileName, $format);
     }
 }

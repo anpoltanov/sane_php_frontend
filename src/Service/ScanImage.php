@@ -5,43 +5,37 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\ScanTask;
+use App\Service\Exception\RuntimeException;
 
 class ScanImage
 {
+    public function __construct(
+        private readonly bool $mock = false,
+        private readonly string $fixturePath = '',
+    ) {
+    }
+
     /**
-     * @param string $device
-     * @return array
+     * @return array{resolutions: int[]}
      */
     public function getScannerOptions(string $device): array
     {
-        $shellCmd = sprintf('scanimage --help --format=pnm -d %s', escapeshellarg($device));
-        $message = $pipes = [];
-        $proc = null;
-
-        try {
-            $proc = proc_open($shellCmd, [
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ],$pipes);
-
-            $stdout = stream_get_contents($pipes[1]);
-            $stderr = stream_get_contents($pipes[2]);
-
-            if ($stderr) {
-                throw new Exception\RuntimeException(sprintf("Internal error %s:\n %s", $stdout, $stderr));
-            }
-            preg_match('/--resolution\D*(\d.*)dpi.*$/im', $stdout, $matches);
-
-            $message['resolutions'] = explode("|", trim($matches[1]));
-
-            return $message;
-        } catch (Exception\RuntimeException $e) {
-            throw $e;
-        } finally {
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            proc_close($proc);
+        if ($this->mock) {
+            return ['resolutions' => [150, 300, 600]];
         }
+
+        $stdout = $this->run(sprintf('scanimage --help --format=pnm -d %s', escapeshellarg($device)));
+        if (!preg_match('/--resolution\D*(\d.*)dpi.*$/im', $stdout, $matches)) {
+            throw new RuntimeException('Could not parse scanner resolutions');
+        }
+
+        $resolutions = array_map(static fn (string $value): int => (int) $value, explode('|', trim($matches[1])));
+        $resolutions = array_values(array_filter($resolutions, static fn (int $value): bool => $value > 0));
+        if ($resolutions === []) {
+            throw new RuntimeException('Could not parse scanner resolutions');
+        }
+
+        return ['resolutions' => $resolutions];
     }
 
     /**
@@ -49,77 +43,78 @@ class ScanImage
      */
     public function getScanners(): array
     {
-        $shellCmd = 'scanimage -f %d%n';
-        $pipes = [];
-        $proc = null;
-
-        try {
-            $proc = proc_open($shellCmd, [
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ],$pipes);
-
-            $stdout = stream_get_contents($pipes[1]);
-            $stderr = stream_get_contents($pipes[2]);
-
-            if ($stderr) {
-                throw new Exception\RuntimeException(sprintf("Internal error %s:\n %s", $stdout, $stderr));
-            }
-
-            $message = trim($stdout) ? explode("\n", trim($stdout)) : [];
-        } catch (Exception\RuntimeException $e) {
-            throw $e;
-        } finally {
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            proc_close($proc);
+        if ($this->mock) {
+            return ['mock:scanner'];
         }
 
-        return $message;
+        $stdout = $this->run('scanimage -f %d%n');
+
+        return trim($stdout) === '' ? [] : explode("\n", trim($stdout));
     }
 
-    /**
-     * @param ScanTask $scanTask
-     * @return string
-     */
-    public function scanImage(ScanTask $scanTask): string
+    public function scanToFile(ScanTask $scanTask, string $outputPath): void
     {
-        $shellCmd = sprintf(
-            'scanimage --mode=Color --resolution=%d --format=%s --compression=None',
-            $scanTask->getResolution(),
-            $scanTask->getExtension()
-        );
-        $pipes = [];
-        $proc = null;
-
-        try {
-            // @TODO should be executed async (maybe MQ?)
-            $proc = proc_open($shellCmd, [
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ],$pipes);
-
-            $stdout = stream_get_contents($pipes[1]);
-            $stderr = stream_get_contents($pipes[2]);
-
-            if ($stderr) {
-                throw new Exception\RuntimeException(sprintf("Scan error %s:\n %s", $stdout, $stderr));
+        if ($this->mock) {
+            if ($this->fixturePath === '' || !is_file($this->fixturePath)) {
+                throw new RuntimeException('Mock scan fixture is missing');
+            }
+            if (!copy($this->fixturePath, $outputPath)) {
+                throw new RuntimeException('Unable to copy mock scan fixture');
             }
 
-            $filePath = sprintf('/tmp/scan.%s', $scanTask->getExtension());
-            $success = file_put_contents($filePath, $stdout);
-
-            if ($success === false) {
-                throw new Exception\RuntimeException(sprintf("File write error %s:\n %s", $stdout, $stderr));
-            }
-
-            return $stdout;
-        } catch (Exception\RuntimeException $e) {
-            throw $e;
-        } finally {
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            proc_close($proc);
+            return;
         }
+
+        $device = $scanTask->getDeviceName();
+        if ($device === '') {
+            throw new RuntimeException('Scanner device is empty');
+        }
+
+        $this->run(sprintf(
+            'scanimage --mode=Color --resolution=%d --format=jpeg -d %s',
+            $scanTask->getResolution(),
+            escapeshellarg($device)
+        ), $outputPath);
+
+        if (!is_file($outputPath) || filesize($outputPath) === 0) {
+            throw new RuntimeException('Scan produced an empty file');
+        }
+    }
+
+    private function run(string $shellCmd, ?string $stdoutPath = null): string
+    {
+        $descriptors = [
+            1 => $stdoutPath === null ? ['pipe', 'w'] : ['file', $stdoutPath, 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $proc = proc_open($shellCmd, $descriptors, $pipes, null, null);
+        if (!is_resource($proc)) {
+            throw new RuntimeException('Unable to start scanimage');
+        }
+
+        $stdout = '';
+        $stderr = '';
+        try {
+            if (isset($pipes[1]) && is_resource($pipes[1])) {
+                $stdout = (string) stream_get_contents($pipes[1]);
+            }
+            if (isset($pipes[2]) && is_resource($pipes[2])) {
+                $stderr = (string) stream_get_contents($pipes[2]);
+            }
+        } finally {
+            foreach ($pipes as $pipe) {
+                if (is_resource($pipe)) {
+                    fclose($pipe);
+                }
+            }
+            $exitCode = proc_close($proc);
+        }
+
+        if ($exitCode !== 0) {
+            throw new RuntimeException(sprintf("scanimage failed (%d):\n%s", $exitCode, $stderr));
+        }
+
+        return $stdout;
     }
 }

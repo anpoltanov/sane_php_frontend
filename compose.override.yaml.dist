@@ -11,7 +11,9 @@ services:
     volumes:
       - ./:/var/www/html/
     environment:
-      - PHP_IDE_CONFIG="serverName=scan.wip"
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      PHP_IDE_CONFIG: serverName=scan.wip
 
   redis:
     restart: no

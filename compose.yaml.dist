@@ -18,8 +18,14 @@ services:
     volumes:
       - php_var:/var/www/html/var
 
+    # Real env vars override .env inside the image. Change APP_SECRET before deploy.
     environment:
-      - TZ="Europe/Moscow"
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      APP_SECRET: ThisTokenIsNotSoSecretChangeIt
+      REDIS_URL: redis://sane_php_frontend-redis
+      TZ: Europe/Moscow
+
 #    healthcheck:
 #      test: curl -sS http://php/healthcheck || echo 1
 #      interval: 120s

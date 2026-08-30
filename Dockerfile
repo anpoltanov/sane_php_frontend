@@ -123,6 +123,16 @@ USER root
 RUN chown -R www-data:www-data /var/www/html
 USER www-data
 
+# Install while the copied .env still has APP_ENV=dev so Composer auto-scripts
+# (cache:clear) use the filesystem cache and do not need Redis at build time.
 RUN --mount=type=cache,target=/tmp/cache \
     composer install --no-dev --optimize-autoloader --no-interaction
 RUN php bin/console assets:install --env=prod --no-debug
+
+# Replace local-dev .env so the image does not ship APP_ENV=dev.
+# Compose / systemd environment variables still override these values at runtime.
+COPY --chown=www-data:www-data ./.env.prod /var/www/html/.env
+
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+

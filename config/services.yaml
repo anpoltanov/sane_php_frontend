@@ -2,6 +2,9 @@
 # Files in the packages/ subdirectory configure your dependencies.
 
 parameters:
+    env(SCAN_MOCK): '0'
+    app.scan_storage_dir: '%kernel.project_dir%/var/scans'
+    app.scan_ttl_seconds: 900
 
 services:
     _defaults:
@@ -14,3 +17,13 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Service\ScanImage:
+        arguments:
+            $mock: '%env(bool:SCAN_MOCK)%'
+            $fixturePath: '%kernel.project_dir%/tests/fixtures/sample.jpg'
+
+    App\Service\ScanResultStore:
+        arguments:
+            $directory: '%app.scan_storage_dir%'
+            $ttlSeconds: '%app.scan_ttl_seconds%'

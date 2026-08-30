@@ -3,15 +3,68 @@
 {% block title %}Scan image{% endblock %}
 
 {% block page_contents %}
-    {% if success or error %}
-        <div class="alert alert-{% if success %}success{% elseif error %}danger{% endif %} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endif %}
+    <div
+        data-controller="scan"
+        data-scan-download-template-value="{{ path('scan_download', {id: '00000000000000000000000000000000'}) }}"
+        data-scan-options-url-value="{{ path('scanner_options') }}"
+    >
+        {% if success or error %}
+            <div class="alert alert-{% if success %}success{% elseif error %}danger{% endif %} alert-dismissible fade show" role="alert" data-scan-target="flash">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
 
-    <h1>Scanner</h1>
-    {% if form is not null %}
-        {{ form(form) }}
-    {% endif %}
+        <div class="alert d-none" role="alert" data-scan-target="status"></div>
+
+        <h1>Scanner</h1>
+
+        {% if form is not null %}
+            {{ form_start(form, { attr: {
+                'data-scan-target': 'form',
+                'data-action': 'submit->scan#submit'
+            } }) }}
+            {{ form_row(form.deviceName, { attr: {
+                'data-scan-target': 'device',
+                'data-action': 'change->scan#changeDevice'
+            } }) }}
+            {{ form_row(form.resolution, { attr: {
+                'data-scan-target': 'resolution'
+            } }) }}
+            {{ form_row(form.fileName, { attr: {
+                'data-scan-target': 'filename'
+            } }) }}
+            {{ form_row(form.submit, { attr: {
+                'data-scan-target': 'submitButton'
+            } }) }}
+            {{ form_end(form) }}
+        {% endif %}
+
+        <div class="scan-preview mt-4 d-none" hidden data-scan-target="preview">
+            <h2 class="h5">Preview</h2>
+            <img alt="Scan preview" class="scan-preview__image img-fluid border rounded mb-3" data-scan-target="previewImage">
+
+            <fieldset class="mb-3">
+                <legend class="form-label">File format</legend>
+                {% for format in formats %}
+                    <div class="form-check form-check-inline">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="downloadFormat"
+                            id="format-{{ format }}"
+                            value="{{ format }}"
+                            data-scan-target="format"
+                            {% if loop.first %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="format-{{ format }}">{{ format|upper }}</label>
+                    </div>
+                {% endfor %}
+            </fieldset>
+
+            <button type="button" class="btn btn-primary" data-action="scan#download" data-scan-target="downloadButton">
+                Download
+            </button>
+        </div>
+    </div>
 {% endblock %}

@@ -18,9 +18,15 @@ class RoutingTest extends KernelTestCase
         $collection = $router->getRouteCollection();
 
         $this->assertNotNull($collection->get('scan'));
+        $this->assertNotNull($collection->get('scan_create'));
+        $this->assertNotNull($collection->get('scan_preview'));
+        $this->assertNotNull($collection->get('scan_download'));
         $this->assertNotNull($collection->get('scanner_index'));
         $this->assertNotNull($collection->get('scanner_options'));
         $this->assertSame('/', $collection->get('scan')->getPath());
+        $this->assertSame('/scan', $collection->get('scan_create')->getPath());
+        $this->assertSame('/scan/{id}/preview', $collection->get('scan_preview')->getPath());
+        $this->assertSame('/scan/{id}/download', $collection->get('scan_download')->getPath());
         $this->assertSame('/scanner', $collection->get('scanner_index')->getPath());
         $this->assertSame('/scanner/options', $collection->get('scanner_options')->getPath());
     }

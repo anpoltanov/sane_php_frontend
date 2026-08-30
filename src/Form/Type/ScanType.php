@@ -16,22 +16,21 @@ class ScanType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $scanners = $options['scanners'];
+        $resolutions = $options['resolutions'];
+
         $builder
+            ->add('deviceName', ChoiceType::class, [
+                'label' => 'Scanner',
+                'choices' => array_combine($scanners, $scanners) ?: [],
+            ])
+            ->add('resolution', ChoiceType::class, [
+                'label' => 'Resolution (DPI)',
+                'choices' => $this->labeledChoices($resolutions),
+            ])
             ->add('fileName', TextType::class, [
                 'required' => false,
                 'label' => 'File name',
-            ])
-            ->add('extension', ChoiceType::class, [
-                'choices' => ScanTask::getAvailableExtensions(),
-                'choice_label' => function ($choice, $key, $value) {
-                    return $choice;
-                },
-            ])
-            ->add('resolution', ChoiceType::class, [
-                'choices' => ScanTask::getAvailableResolutions(),
-                'choice_label' => function ($choice, $key, $value) {
-                    return $choice;
-                },
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'Scan',
@@ -42,6 +41,24 @@ class ScanType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => ScanTask::class,
+            'scanners' => [],
+            'resolutions' => [],
         ]);
+        $resolver->setAllowedTypes('scanners', 'array');
+        $resolver->setAllowedTypes('resolutions', 'array');
+    }
+
+    /**
+     * @param array<int|string> $values
+     * @return array<string, int|string>
+     */
+    private function labeledChoices(array $values): array
+    {
+        $choices = [];
+        foreach ($values as $value) {
+            $choices[(string) $value] = is_numeric($value) ? (int) $value : $value;
+        }
+
+        return $choices;
     }
 }

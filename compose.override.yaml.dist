@@ -12,6 +12,7 @@ services:
       - ./:/var/www/html/
     environment:
       APP_ENV: dev
+      APP_DEBUG: "1"
       PHP_IDE_CONFIG: serverName=scan.wip
 
   redis:
